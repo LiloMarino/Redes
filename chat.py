@@ -3,15 +3,17 @@ from client_tcp import client
 from host_tcp import host
 
 if __name__ == "__main__":
-    # Carrega as configurações e pede o nick
+    # Carrega as configurações
     config = load_config()
+    option = input("Hospedar (H) ou Cliente (C):\n>").upper()
+
+    # Exige o nick
     nickname = input(
         f"Digite um apelido (Default: {config.get('nickname', '')}):\n>"
         or {config.get("nickname", "")}
     ).strip()
-
+    
     # Seleciona a opção
-    option = input("Hospedar (H) ou Cliente (C):\n>").upper()
     while True:
         if option == "H":
             # Exige a port
@@ -27,7 +29,7 @@ if __name__ == "__main__":
             save_config(config)
 
             # Hospeda
-            host()
+            host(server_port)
         elif option == "C":
             # Exige o ip e a port
             server_ip = input(

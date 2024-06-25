@@ -1,3 +1,5 @@
 venv
 *.dtmp
 *.bkp
+config.json
+*.pyc
