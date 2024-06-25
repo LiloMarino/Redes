@@ -12,7 +12,7 @@ def client(server_ip: str, server_port: int):
 
             # Inicia thread para receber mensagens do servidor
             receive_thread = threading.Thread(
-                target=receive_messages, args=(client_socket,)
+                target=receber_mensagem, args=(client_socket,)
             )
             receive_thread.start()
 
@@ -27,7 +27,7 @@ def client(server_ip: str, server_port: int):
         print(f"Erro ao se conectar ao servidor: {e}")
 
 
-def receive_messages(client_socket: socket):
+def receber_mensagem(client_socket: socket):
     while True:
         try:
             data = client_socket.recv(4096)
