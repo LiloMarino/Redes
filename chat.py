@@ -8,11 +8,13 @@ if __name__ == "__main__":
     option = input("Hospedar (H) ou Cliente (C):\n>").upper()
 
     # Exige o nick
-    nickname = input(
-        f"Digite um apelido (Default: {config.get('nickname', '')}):\n>"
-        or {config.get("nickname", "")}
-    ).strip()
-    
+    while True:
+        nickname = input(
+            f"Digite um apelido (Default: {config.get('nickname', '')}):\n>"
+        ).strip() or config.get("nickname", "")
+        if nickname:
+            break
+
     # Seleciona a opção
     while True:
         if option == "H":
@@ -29,7 +31,7 @@ if __name__ == "__main__":
             save_config(config)
 
             # Hospeda
-            host(server_port)
+            host(server_port, nickname)
         elif option == "C":
             # Exige o ip e a port
             server_ip = input(
@@ -49,6 +51,6 @@ if __name__ == "__main__":
             save_config(config)
 
             # Conecta
-            client(server_ip, server_port)
+            client(server_ip, server_port, nickname)
         else:
             option = input("Opção inválida digite novamente: ").upper()
