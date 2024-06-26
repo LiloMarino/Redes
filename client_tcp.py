@@ -2,13 +2,16 @@ import threading
 from socket import *
 
 
-def client(server_ip: str, server_port: int):
+def client(server_ip: str, server_port: int, nickname: str):
     try:
         print(f"Tentando conexão ao servidor {server_ip}:{server_port}")
         with socket(AF_INET, SOCK_STREAM) as client_socket:
             # Conecta ao servidor
             client_socket.connect((server_ip, server_port))
             print(f"Conectado ao servidor {server_ip}:{server_port}")
+
+            # Envia o nickname ao servidor
+            client_socket.sendall(nickname.encode())
 
             # Inicia thread para receber mensagens do servidor
             receive_thread = threading.Thread(
