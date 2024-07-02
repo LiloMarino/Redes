@@ -27,6 +27,7 @@ def client(server_ip: str, server_port: int, nickname: str):
                 mensagem = input()
                 if mensagem.lower() == "exit":
                     print("Encerrando conexão...")
+                    client_socket.sendall()
                     break
                 client_socket.sendall(mensagem.encode())
     except Exception as e:

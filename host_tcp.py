@@ -17,7 +17,6 @@ def host(server_port: int, host_nickname: str):
     try:
         server_ip = get_local_ip()
         nicknames = {}
-        client_threads = []
 
         # Inicia uma thread para enviar mensagens aos clientes:
         send_thread = threading.Thread(
@@ -44,14 +43,12 @@ def host(server_port: int, host_nickname: str):
                 for client in nicknames.values():
                     joined_server(nickname, client)
 
-                # Inicia uma nova thread para lidar com o cliente
+                # Inicia uma nova thread para escutar o cliente
                 client_thread = threading.Thread(
-                    target=cliente,
-                    args=(nickname, ip_cliente, nicknames, client_threads),
+                    target=escutar_cliente,
+                    args=(nickname, nicknames),
                 )
                 client_thread.start()
-
-                client_threads.append((client_thread))
 
     except Exception as e:
         print(f"Erro ao iniciar o servidor: {e}")
@@ -75,7 +72,7 @@ def enviar_mensagem(nicknames: dict[str, socket], host_nickname: str):
         print(f"Erro ao enviar mensagem: {e}")
 
 
-def cliente(nickname: str, ip_client: str, nicknames: dict, client_threads: list):
+def escutar_cliente(nickname: str, nicknames: dict[str, socket]):
     client_socket: socket = nicknames[nickname]
     try:
         while True:
@@ -83,16 +80,19 @@ def cliente(nickname: str, ip_client: str, nicknames: dict, client_threads: list
             data = client_socket.recv(4096)
             if not data:
                 break
-            print(f"<{nickname}>: {data.decode()}")
+            mensagem = f"<{nickname}>:{data.decode()}"
+            print(mensagem)
+            for client in nicknames.values():
+                if client != client_socket:
+                    client.sendall(mensagem.encode())
 
     except Exception as e:
-        print(f"Erro ao receber dados do cliente {nickname} ({ip_client}): {e}")
+        print(f"Erro ao receber dados do cliente {nickname} (): {e}")
 
     finally:
         # Remove o cliente e a thread associada ao desconectar
-        client_threads.remove(threading.current_thread())
         del nicknames[nickname]
         client_socket.close()
         for client in nicknames.values():
             left_server(nickname, client)
-        print(f"Cliente {nickname} ({ip_client}) desconectado.")
+        print(f"{nickname} saiu do servidor!")
