@@ -17,6 +17,14 @@ def host(server_port: int, host_nickname: str):
     try:
         server_ip = get_local_ip()
         nicknames = {}
+        client_threads = []
+
+        # Inicia uma thread para enviar mensagens aos clientes:
+        send_thread = threading.Thread(
+            target=enviar_mensagem, args=(nicknames, host_nickname)
+        )
+        send_thread.start()
+
         with socket(AF_INET, SOCK_STREAM) as host_socket:
             # Liga o socket à porta local
             host_socket.bind((server_ip, server_port))
@@ -32,20 +40,18 @@ def host(server_port: int, host_nickname: str):
 
                 # Recebe o nickname do cliente
                 nickname = client_socket.recv(1024).decode()
-                nicknames[client_socket] = nickname
-                joined_server(nickname, client_socket)
+                nicknames[nickname] = client_socket
+                for client in nicknames.values():
+                    joined_server(nickname, client)
 
                 # Inicia uma nova thread para lidar com o cliente
                 client_thread = threading.Thread(
-                    target=cliente, args=(client_socket, ip_cliente, nicknames)
+                    target=cliente,
+                    args=(nickname, ip_cliente, nicknames, client_threads),
                 )
                 client_thread.start()
 
-                # Inicia uma thread para enviar mensagens ao cliente
-                send_thread = threading.Thread(
-                    target=enviar_mensagem, args=(client_socket, host_nickname)
-                )
-                send_thread.start()
+                client_threads.append((client_thread))
 
     except Exception as e:
         print(f"Erro ao iniciar o servidor: {e}")
@@ -59,27 +65,34 @@ def left_server(nickname: str, client_socket: socket):
     client_socket.sendall(f"SERVER: {nickname} saiu do servidor!".encode())
 
 
-def enviar_mensagem(client_socket: socket, host_nickname: str):
-    while True:
-        try:
+def enviar_mensagem(nicknames: dict[str, socket], host_nickname: str):
+    try:
+        while True:
             mensagem = f"<{host_nickname}>:" + input()
-            client_socket.sendall(mensagem.encode())
-        except Exception as e:
-            print(f"Erro ao enviar mensagem: {e}")
-            break
+            for client in nicknames.values():
+                client.sendall(mensagem.encode())
+    except Exception as e:
+        print(f"Erro ao enviar mensagem: {e}")
 
 
-def cliente(client_socket: socket, ip_client: str, nicknames: dict):
-    with client_socket:
-        nickname = nicknames[client_socket]
-        try:
-            while True:
-                # Recebe dados do cliente
-                data = client_socket.recv(4096)
-                if not data:
-                    left_server(nickname, client_socket)
-                    break
-                print(f"<{nickname}>: {data.decode()}")
+def cliente(nickname: str, ip_client: str, nicknames: dict, client_threads: list):
+    client_socket: socket = nicknames[nickname]
+    try:
+        while True:
+            # Recebe dados do cliente
+            data = client_socket.recv(4096)
+            if not data:
+                break
+            print(f"<{nickname}>: {data.decode()}")
 
-        except Exception as e:
-            print(f"Erro ao receber dados do cliente {nickname} ({ip_client}): {e}")
+    except Exception as e:
+        print(f"Erro ao receber dados do cliente {nickname} ({ip_client}): {e}")
+
+    finally:
+        # Remove o cliente e a thread associada ao desconectar
+        client_threads.remove(threading.current_thread())
+        del nicknames[nickname]
+        client_socket.close()
+        for client in nicknames.values():
+            left_server(nickname, client)
+        print(f"Cliente {nickname} ({ip_client}) desconectado.")
