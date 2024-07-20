@@ -1,11 +1,19 @@
+from libs import client_tcp, client_udp, host_tcp, host_udp
 from libs.autoload import load_config, save_config
-from libs.client_tcp import client
-from libs.host_tcp import host
 
 if __name__ == "__main__":
     # Carrega as configurações
     config = load_config()
     option = input("Hospedar (H) ou Cliente (C):\n>").upper()
+
+    # Exige o tipo de conexão (TCP/UDP)
+    while True:
+        protocolo = input(
+            f"Digite o protocolo (TCP/UDP) (Default: {config.get('protocolo', '')}):\n>"
+        ).strip().upper() or config.get("protocolo", "")
+        if protocolo in ("TCP", "UDP"):
+            break
+        print("Protocolo Inválido!")
 
     # Exige o nick
     while True:
@@ -31,7 +39,10 @@ if __name__ == "__main__":
             save_config(config)
 
             # Hospeda
-            host(server_port, nickname)
+            if protocolo == "TCP":
+                host_tcp.host(server_port, nickname)
+            else:
+                host_udp.host(server_port, nickname)
         elif option == "C":
             # Exige o ip e a port
             server_ip = input(
@@ -51,6 +62,9 @@ if __name__ == "__main__":
             save_config(config)
 
             # Conecta
-            client(server_ip, server_port, nickname)
+            if protocolo == "TCP":
+                client_tcp.client(server_ip, server_port, nickname)
+            else:
+                client_udp.client(server_ip, server_port, nickname)
         else:
             option = input("Opção inválida digite novamente: ").upper()
