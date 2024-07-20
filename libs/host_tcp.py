@@ -1,5 +1,5 @@
 import threading
-from socket import *
+from socket import AF_INET, SOCK_DGRAM, SOCK_STREAM, socket
 
 
 def get_local_ip():

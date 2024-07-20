@@ -1,7 +1,7 @@
 import os
 import re
 import threading
-from socket import *
+from socket import AF_INET, SOCK_STREAM, socket
 
 
 def client(server_ip: str, server_port: int, nickname: str):
@@ -11,7 +11,7 @@ def client(server_ip: str, server_port: int, nickname: str):
             # Conecta ao servidor
             client_socket.connect((server_ip, server_port))
             os.system("cls")
-            print(f"Conectado ao servidor {server_ip}:{server_port}")
+            print(f"Conectado ao servidor {server_ip}:{server_port} via TCP")
 
             # Envia o nickname ao servidor
             client_socket.sendall(nickname.encode())

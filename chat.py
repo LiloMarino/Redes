@@ -1,6 +1,6 @@
-from autoload import load_config, save_config
-from client_tcp import client
-from host_tcp import host
+from libs.autoload import load_config, save_config
+from libs.client_tcp import client
+from libs.host_tcp import host
 
 if __name__ == "__main__":
     # Carrega as configurações
