@@ -1,5 +1,8 @@
+import logging
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
+
+from tqdm import tqdm
 
 from libs.guarantee import prepare_data, send_basic_data
 
@@ -21,29 +24,20 @@ def get_packets(file_path: Path, packet_size: int) -> list[bytes]:
 def file_client(server_ip: str, server_port: int, packet_size: int, file_path: Path):
     packets = get_packets(file_path, packet_size)
     number_packets = len(packets)
-
     try:
         with socket(AF_INET, SOCK_DGRAM) as client_socket:
             send_basic_data(
                 client_socket, (server_ip, server_port), number_packets, file_path
             )
 
-            for packet in packets:
+            for packet in tqdm(packets, desc="Enviando", unit="pacote"):
                 while True:
                     client_socket.sendto(packet, (server_ip, server_port))
                     ack, _ = client_socket.recvfrom(1024)
                     if ack == b"ACK":
                         break
                     else:
-                        print("ACK não recebido, reenviando pacote...")
-
-            # while True:
-            #     client_socket.sendto(b"END", (server_ip, server_port))
-            #     end, _ = client_socket.recvfrom(1024)
-            #     if end == b"ACK":
-            #         print("Arquivo enviado com sucesso!")
-            #         break
-            #     else:
-            #         print("ACK não recebido para o final, reenviando...")
+                        logging.info("ACK não recebido, reenviando pacote...")
+            print("Arquivo enviado com sucesso!")
     except Exception as e:
         print(f"Erro no cliente: {e}")

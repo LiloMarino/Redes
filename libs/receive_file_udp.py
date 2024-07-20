@@ -1,5 +1,7 @@
 from socket import AF_INET, SOCK_DGRAM, socket
 
+from tqdm import tqdm
+
 from libs.guarantee import receive_basic_data, receive_data
 from libs.host_tcp import get_local_ip
 
@@ -15,26 +17,23 @@ def file_server(server_port: int):
             # Recebe os dados básicos do arquivo
             file_name, packets_qty = receive_basic_data(server_socket)
             packets = {}
-
             # Recebe todos os pacotes
-            while len(packets) < packets_qty:
-                while True:
+            with tqdm(total=packets_qty, desc="Recebendo", unit="pacote") as pbar:
+                while len(packets) < packets_qty:
                     data, sender_address = server_socket.recvfrom(4096)
                     try:
                         header, payload = receive_data(data)
                         packets[header] = payload
                         # Envia o ACK para confirmar o recebimento do pacote
                         server_socket.sendto(b"ACK", sender_address)
-                        break
+                        pbar.update(1)
                     except ValueError:
                         # Envia NOT para solicitar o reenvio do pacote corrompido
                         server_socket.sendto(b"NOT", sender_address)
 
-            # Ordena os pacotes com base no header e salva o arquivo no disco
-            sorted_packets = [packets[i] for i in sorted(packets.keys(), key=int)]
             with open(file_name, "wb") as file:
-                for data in sorted_packets:
-                    file.write(data)
+                for i in range(packets_qty):
+                    file.write(packets[i])
             print("Transferência de arquivo concluída.")
 
     except Exception as e:
