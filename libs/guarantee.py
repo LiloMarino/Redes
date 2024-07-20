@@ -38,37 +38,45 @@ def send_basic_data(
     file_name = file_path.name
     payload = f"{file_name}{SECOND_SEPARATOR}{packets_qty}"
     binary_packet = prepare_data(0, payload)
-    # Realiza uma tentativa de envio e caso não dê certo reenvia
-    data = None
-    while data != b"ACK":
+
+    while True:
         client_socket.sendto(binary_packet, ip_port)
-        data, _ = client_socket.recvfrom(4096)
-    print("Enviado informações básicas com sucesso!")
+        try:
+            data, _ = client_socket.recvfrom(4096)
+            if data == b"ACK":
+                print("Enviado informações básicas com sucesso!")
+                break
+            else:
+                print("Recebido não ACK, reenviando...")
+        except Exception as e:
+            print(f"Erro ao receber ACK: {e}")
+            print("Tentando reenviar...")
 
 
 def receive_basic_data(server_socket: socket):
-    # Recebe o pacote com as informações básicas
-    payload = None
-    retry = True
-    while retry:
-        data, receive_address = server_socket.recvfrom(4096)
+    while True:
         try:
-            _, payload = receive_data(data)
-            retry = False
+            data, receive_address = server_socket.recvfrom(4096)
+            header, payload = receive_data(data)
+
             # Envia ACK para confirmar o recebimento
             server_socket.sendto(b"ACK", receive_address)
+
+            # Obtém os dados usando expressões regulares
+            pattern = rf"^(.+){SECOND_SEPARATOR}(.+)$"
+            match = re.match(pattern, payload)
+            if match:
+                file_name, packets_qty = match.groups()
+                return file_name, packets_qty
+            else:
+                print("Erro ao processar o payload.")
+                server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
         except ValueError:
             print("Pacote corrompido, solicitando reenvio...")
-            server_socket.sendto(b"NOT", receive_address)
-
-    # Obtém os dados usando expressões regulares
-    pattern = rf"^(.+){SECOND_SEPARATOR}(.+)$"
-    match = re.match(pattern, payload)
-    if match:
-        file_name, packets_qty = match.groups()
-        return file_name, packets_qty
-    else:
-        raise ValueError("Erro ao obter dados básicos")
+            server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
+        except Exception as e:
+            print(f"Erro ao processar dados: {e}")
+            server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
 
 
 def hash_with_seed(data: bytes, seed: bytes) -> str:
