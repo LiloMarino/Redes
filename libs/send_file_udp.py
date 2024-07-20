@@ -37,13 +37,13 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
                     else:
                         print("ACK não recebido, reenviando pacote...")
 
-            while True:
-                client_socket.sendto(b"END", (server_ip, server_port))
-                end, _ = client_socket.recvfrom(1024)
-                if end == b"ACK":
-                    print("Arquivo enviado com sucesso!")
-                    break
-                else:
-                    print("ACK não recebido para o final, reenviando...")
+            # while True:
+            #     client_socket.sendto(b"END", (server_ip, server_port))
+            #     end, _ = client_socket.recvfrom(1024)
+            #     if end == b"ACK":
+            #         print("Arquivo enviado com sucesso!")
+            #         break
+            #     else:
+            #         print("ACK não recebido para o final, reenviando...")
     except Exception as e:
         print(f"Erro no cliente: {e}")

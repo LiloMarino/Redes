@@ -18,18 +18,13 @@ if __name__ == "__main__":
                 f"Digite a porta do servidor (Default: {config.get('server_port', 5001)}): "
             ).strip() or config.get("server_port", 5001)
             server_port = int(server_port)
-            packet_size = input(
-                f"Digite o tamanho do pacote (bytes) (Default: {config.get('packet_size', 500)}): "
-            ).strip() or config.get("packet_size", 500)
-            packet_size = int(packet_size)
 
             # Salva os dados
             config["server_port"] = server_port
-            config["packet_size"] = packet_size
             save_config(config)
 
             # Recebe o arquivo
-            file_server(server_port, packet_size)
+            file_server(server_port)
         elif option == "E":
             # Exige o ip e a port
             server_ip = input(
