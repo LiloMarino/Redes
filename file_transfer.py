@@ -1,3 +1,5 @@
+import logging
+import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog
 
@@ -5,7 +7,19 @@ from libs.autoload import load_config, save_config
 from libs.receive_file_udp import file_server
 from libs.send_file_udp import file_client
 
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler("info.log", "a", "utf-8"),
+    ],
+)
+
 if __name__ == "__main__":
+    # Inicializa a janela Tkinter
+    root = tk.Tk()
+    root.withdraw()  # Oculta a janela principal
+
     # Carrega as configurações
     config = load_config()
     option = input("Receber (R) ou Enviar (E):\n>").upper()
@@ -46,9 +60,12 @@ if __name__ == "__main__":
             save_config(config)
 
             # Exige o arquivo
-            path_arquivo = Path(filedialog.askopenfilename())
+            path_arquivo = Path(filedialog.askopenfilename(title="Selecione o arquivo"))
 
-            # Envia o arquivo
-            file_client(server_ip, server_port, packet_size, path_arquivo)
+            if path_arquivo:
+                # Envia o arquivo
+                file_client(server_ip, server_port, packet_size, path_arquivo)
+            else:
+                print("Nenhum arquivo selecionado.")
         else:
             option = input("Opção inválida digite novamente: ").upper()
