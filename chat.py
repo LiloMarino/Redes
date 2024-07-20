@@ -36,6 +36,7 @@ if __name__ == "__main__":
             # Salva os dados
             config["nickname"] = nickname
             config["server_port"] = server_port
+            config["protocolo"] = protocolo
             save_config(config)
 
             # Hospeda
@@ -59,6 +60,7 @@ if __name__ == "__main__":
             config["nickname"] = nickname
             config["server_ip"] = server_ip
             config["server_port"] = server_port
+            config["protocolo"] = protocolo
             save_config(config)
 
             # Conecta
