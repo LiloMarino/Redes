@@ -11,14 +11,13 @@ def host(server_port: int, host_nickname: str):
 
         # Inicia uma thread para enviar mensagens aos clientes:
         send_thread = threading.Thread(
-            target=enviar_mensagem,
-            args=(nicknames, host_nickname, server_ip, server_port),
+            target=enviar_mensagem, args=(nicknames, host_nickname)
         )
         send_thread.start()
 
         with socket(AF_INET, SOCK_DGRAM) as host_socket:
-            # Liga o socket à porta local
-            host_socket.bind((server_ip, server_port))
+            # Liga o socket à porta local em qualquer IP
+            host_socket.bind(("", server_port))
             print(f"Hospedando em {server_ip}:{server_port}\n")
 
             while True:
@@ -48,18 +47,15 @@ def left_server(nickname: str, host_socket: socket, client_addr):
     host_socket.sendto(f"SERVER: {nickname} saiu do servidor!".encode(), client_addr)
 
 
-def enviar_mensagem(
-    nicknames: dict[str, tuple], host_nickname: str, server_ip: str, server_port: int
-):
-    with socket(AF_INET, SOCK_DGRAM) as send_socket:
-        send_socket.bind((server_ip, server_port))
-        try:
-            while True:
-                mensagem = f"<{host_nickname}>:" + input()
-                for client_addr in nicknames.values():
+def enviar_mensagem(nicknames: dict[str, tuple], host_nickname: str):
+    try:
+        while True:
+            mensagem = f"<{host_nickname}>:" + input()
+            for client_addr in nicknames.values():
+                with socket(AF_INET, SOCK_DGRAM) as send_socket:
                     send_socket.sendto(mensagem.encode(), client_addr)
-        except Exception as e:
-            print(f"Erro ao enviar mensagem: {e}")
+    except Exception as e:
+        print(f"Erro ao enviar mensagem: {e}")
 
 
 def escutar_cliente(nickname: str, nicknames: dict[str, tuple], host_socket: socket):
