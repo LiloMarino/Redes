@@ -13,9 +13,9 @@ def get_packets(file_path: Path, packet_size: int) -> list[bytes]:
     with open(file_path, "rb") as file:
         while True:
             chunk = file.read(packet_size)
-            data = prepare_data(i, chunk)
             if not chunk:
                 break
+            data = prepare_data(i, chunk)
             packets.append(data)
             i += 1
     return packets
@@ -30,14 +30,14 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
                 client_socket, (server_ip, server_port), number_packets, file_path
             )
 
-            for packet in tqdm(packets, desc="Enviando", unit="pacote"):
+            for i, packet in enumerate(tqdm(packets, desc="Enviando", unit="pacote")):
                 while True:
                     client_socket.sendto(packet, (server_ip, server_port))
                     ack, _ = client_socket.recvfrom(1024)
                     if ack == b"ACK":
                         break
                     else:
-                        logging.info("ACK não recebido, reenviando pacote...")
+                        logging.info("ACK não recebido, reenviando pacote ID:%s", i)
             print("Arquivo enviado com sucesso!")
     except Exception as e:
         print(f"Erro no cliente: {e}")

@@ -3,3 +3,4 @@ venv
 *.bkp
 config.json
 *.pyc
+*.log

@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 from pathlib import Path
 from socket import socket
@@ -47,10 +48,10 @@ def send_basic_data(
                 print("Enviado informações básicas com sucesso!")
                 break
             else:
-                print("Recebido não ACK, reenviando...")
+                logging.info("Recebido não ACK, reenviando informações básicas...")
         except Exception as e:
-            print(f"Erro ao receber ACK: {e}")
-            print("Tentando reenviar...")
+            logging.error("Erro ao receber ACK: %s", e)
+            logging.info("Tentando reenviar...")
 
 
 def receive_basic_data(server_socket: socket):
@@ -69,13 +70,13 @@ def receive_basic_data(server_socket: socket):
                 file_name, packets_qty = match.groups()
                 return file_name, packets_qty
             else:
-                print("Erro ao processar o payload.")
+                logging.error("Erro ao processar o payload.")
                 server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
         except ValueError:
-            print("Pacote corrompido, solicitando reenvio...")
+            logging.error("Pacote corrompido, solicitando reenvio...")
             server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
         except Exception as e:
-            print(f"Erro ao processar dados: {e}")
+            logging.error("Erro ao processar dados: %s", e)
             server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
 
 

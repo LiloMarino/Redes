@@ -8,7 +8,7 @@ from libs.receive_file_udp import file_server
 from libs.send_file_udp import file_client
 
 logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(module)s - %(levelname)s - %(message)s",
     level=logging.INFO,
     handlers=[
         logging.FileHandler("info.log", "a", "utf-8"),
