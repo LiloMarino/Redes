@@ -8,28 +8,26 @@ SEPARATOR = "<>"
 SECOND_SEPARATOR = "||"
 
 
-def prepare_data(id: int, payload: str | bytes) -> bytes:
+def prepare_data(id: int, payload: bytes) -> bytes:
     header = f"{id}"
-    packet = f"{header}{SEPARATOR}{payload}"
-    checksum = hashlib.md5(packet.encode()).hexdigest()  # Utiliza hashlib.md5
-    packet = f"{packet}{SEPARATOR}{checksum}"
-    binary_packet = packet.encode()
-    return binary_packet
+    packet = f"{header}{SEPARATOR}".encode() + payload
+    checksum = hashlib.md5(packet).hexdigest()
+    packet += f"{SEPARATOR}{checksum}".encode()
+    return packet
 
 
-def receive_data(binary_packet: bytes) -> tuple[int, str | bytes]:
+def receive_data(binary_packet: bytes) -> tuple[int, bytes]:
     packet = binary_packet.decode()
-    # Expressão regular para obter os dados do pacote
-    pattern = rf"^(\d+){SEPARATOR}(.+){SEPARATOR}([a-fA-F0-9]+)$"
+    pattern = rf"^(\d+){re.escape(SEPARATOR)}(.+){re.escape(SEPARATOR)}([a-fA-F0-9]+)$"
     match = re.match(pattern, packet)
     if match:
         header, payload, checksum = match.groups()
-        # Verifica se o checksum é válido
+        payload = payload.encode("utf-8")
         if (
-            hashlib.md5(f"{header}{SEPARATOR}{payload}".encode()).hexdigest()
+            hashlib.md5(f"{header}{SEPARATOR}".encode() + payload).hexdigest()
             == checksum
         ):
-            return (int(header), payload)
+            return int(header), payload
         else:
             raise ValueError("Pacote corrompido")
     else:
@@ -37,11 +35,11 @@ def receive_data(binary_packet: bytes) -> tuple[int, str | bytes]:
 
 
 def send_basic_data(
-    client_socket: socket, ip_port: tuple[str, str], packets_qty: int, file_path: Path
+    client_socket: socket, ip_port: tuple[str, int], packets_qty: int, file_path: Path
 ):
     file_name = file_path.name
     payload = f"{file_name}{SECOND_SEPARATOR}{packets_qty}"
-    binary_packet = prepare_data(0, payload)
+    binary_packet = prepare_data(0, payload.encode("utf-8"))
 
     while True:
         client_socket.sendto(binary_packet, ip_port)
@@ -71,11 +69,11 @@ def receive_basic_data(server_socket: socket):
             server_socket.sendto(b"ACK", receive_address)
 
             # Obtém os dados usando expressões regulares
-            pattern = rf"^(.+){SECOND_SEPARATOR}(.+)$"
-            match = re.match(pattern, payload)
+            pattern = rf"^(.+){re.escape(SECOND_SEPARATOR)}(.+)$"
+            match = re.match(pattern, payload.decode("utf-8"))
             if match:
                 file_name, packets_qty = match.groups()
-                return file_name, packets_qty
+                return file_name, int(packets_qty)
             else:
                 logging.error("Erro ao processar o payload.")
                 server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio

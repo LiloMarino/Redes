@@ -17,6 +17,7 @@ def file_server(server_port: int):
             # Recebe os dados básicos do arquivo
             file_name, packets_qty = receive_basic_data(server_socket)
             packets = {}
+
             # Recebe todos os pacotes
             with tqdm(total=packets_qty, desc="Recebendo", unit="pacote") as pbar:
                 while len(packets) < packets_qty:
@@ -24,9 +25,10 @@ def file_server(server_port: int):
                     try:
                         header, payload = receive_data(data)
                         packets[header] = payload
-                        # Envia o ACK para confirmar o recebimento do pacote
-                        server_socket.sendto(b"ACK", sender_address)
-                        pbar.update(1)
+                        if len(packets) > pbar.n:
+                            # Envia o ACK para confirmar o recebimento do pacote
+                            server_socket.sendto(b"ACK", sender_address)
+                            pbar.update(1)
                     except ValueError:
                         # Envia NOT para solicitar o reenvio do pacote corrompido
                         server_socket.sendto(b"NOT", sender_address)

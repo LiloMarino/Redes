@@ -39,6 +39,7 @@ if __name__ == "__main__":
 
             # Recebe o arquivo
             file_server(server_port)
+            break
         elif option == "E":
             # Exige o ip e a port
             server_ip = input(
@@ -65,6 +66,7 @@ if __name__ == "__main__":
             if path_arquivo:
                 # Envia o arquivo
                 file_client(server_ip, server_port, packet_size, path_arquivo)
+                break
             else:
                 print("Nenhum arquivo selecionado.")
         else:
