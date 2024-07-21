@@ -2,7 +2,7 @@ import hashlib
 import logging
 import re
 from pathlib import Path
-from socket import socket
+from socket import socket, timeout
 
 SEPARATOR = "<>"
 SECOND_SEPARATOR = "||"
@@ -11,7 +11,7 @@ SECOND_SEPARATOR = "||"
 def prepare_data(id: int, payload: str | bytes) -> bytes:
     header = f"{id}"
     packet = f"{header}{SEPARATOR}{payload}"
-    checksum = hash(packet)
+    checksum = hashlib.md5(packet.encode()).hexdigest()  # Utiliza hashlib.md5
     packet = f"{packet}{SEPARATOR}{checksum}"
     binary_packet = packet.encode()
     return binary_packet
@@ -20,12 +20,15 @@ def prepare_data(id: int, payload: str | bytes) -> bytes:
 def receive_data(binary_packet: bytes) -> tuple[int, str | bytes]:
     packet = binary_packet.decode()
     # Expressão regular para obter os dados do pacote
-    pattern = rf"^(\d+){SEPARATOR}(.+){SEPARATOR}(\d+)$"
+    pattern = rf"^(\d+){SEPARATOR}(.+){SEPARATOR}([a-fA-F0-9]+)$"
     match = re.match(pattern, packet)
     if match:
         header, payload, checksum = match.groups()
         # Verifica se o checksum é válido
-        if hash(f"{header}{SEPARATOR}{payload}") == checksum:
+        if (
+            hashlib.md5(f"{header}{SEPARATOR}{payload}".encode()).hexdigest()
+            == checksum
+        ):
             return (int(header), payload)
         else:
             raise ValueError("Pacote corrompido")
@@ -49,6 +52,10 @@ def send_basic_data(
                 break
             else:
                 logging.info("Recebido não ACK, reenviando informações básicas...")
+        except timeout:
+            logging.info(
+                "Tempo esgotado esperando ACK, reenviando informações básicas..."
+            )
         except Exception as e:
             logging.error("Erro ao receber ACK: %s", e)
             logging.info("Tentando reenviar...")
@@ -78,12 +85,3 @@ def receive_basic_data(server_socket: socket):
         except Exception as e:
             logging.error("Erro ao processar dados: %s", e)
             server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
-
-
-def hash_with_seed(data: bytes, seed: bytes) -> str:
-    # Combine a semente com os dados
-    combined_data = seed + data
-    # Crie um hash SHA-256
-    hash_object = hashlib.sha256(combined_data)
-    # Retorne o hash como uma string hexadecimal
-    return hash_object.hexdigest()

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from socket import AF_INET, SOCK_DGRAM, socket
+from socket import AF_INET, SOCK_DGRAM, socket, timeout
 
 from tqdm import tqdm
 
@@ -26,6 +26,9 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
     number_packets = len(packets)
     try:
         with socket(AF_INET, SOCK_DGRAM) as client_socket:
+            client_socket.settimeout(
+                2
+            )  # Adiciona um timeout de 2 segundos para os ACKs
             send_basic_data(
                 client_socket, (server_ip, server_port), number_packets, file_path
             )
@@ -33,11 +36,16 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
             for i, packet in enumerate(tqdm(packets, desc="Enviando", unit="pacote")):
                 while True:
                     client_socket.sendto(packet, (server_ip, server_port))
-                    ack, _ = client_socket.recvfrom(1024)
-                    if ack == b"ACK":
-                        break
-                    else:
-                        logging.info("ACK não recebido, reenviando pacote ID:%s", i)
+                    try:
+                        ack, _ = client_socket.recvfrom(1024)
+                        if ack == b"ACK":
+                            break
+                        else:
+                            logging.info("ACK não recebido, reenviando pacote ID:%s", i)
+                    except timeout:
+                        logging.info(
+                            "Tempo esgotado esperando ACK, reenviando pacote ID:%s", i
+                        )
             print("Arquivo enviado com sucesso!")
     except Exception as e:
         print(f"Erro no cliente: {e}")
