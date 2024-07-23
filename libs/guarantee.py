@@ -6,18 +6,19 @@ from socket import socket, timeout
 
 SEPARATOR = "<>"
 SECOND_SEPARATOR = "||"
+ENCONDING = "utf8"
 
 
 def prepare_data(id: int, payload: bytes) -> bytes:
     header = f"{id}"
-    packet = f"{header}{SEPARATOR}".encode() + payload
+    packet = f"{header}{SEPARATOR}".encode(encoding=ENCONDING) + payload
     checksum = hashlib.md5(packet).hexdigest()
-    packet += f"{SEPARATOR}{checksum}".encode()
+    packet += f"{SEPARATOR}{checksum}".encode(encoding=ENCONDING)
     return packet
 
 
 def receive_data(binary_packet: bytes) -> tuple[int, bytes]:
-    packet = binary_packet.decode()
+    packet = binary_packet.decode(encoding=ENCONDING)
     pattern = rf"^(\d+){re.escape(SEPARATOR)}(.+){re.escape(SEPARATOR)}([a-fA-F0-9]+)$"
     match = re.match(pattern, packet)
     if match:
@@ -70,7 +71,7 @@ def receive_basic_data(server_socket: socket):
 
             # Obtém os dados usando expressões regulares
             pattern = rf"^(.+){re.escape(SECOND_SEPARATOR)}(.+)$"
-            match = re.match(pattern, payload.decode("utf-8"))
+            match = re.match(pattern, payload.decode(encoding=ENCONDING))
             if match:
                 file_name, packets_qty = match.groups()
                 return file_name, int(packets_qty)
