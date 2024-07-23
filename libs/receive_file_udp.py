@@ -1,3 +1,4 @@
+import logging
 from socket import AF_INET, SOCK_DGRAM, socket
 
 from tqdm import tqdm
@@ -29,9 +30,8 @@ def file_server(server_port: int):
                         if len(packets) > pbar.n:
                             # Envia o ACK para confirmar o recebimento do pacote
                             pbar.update(1)
-                    except ValueError:
-                        # Não faz nada
-                        pass
+                    except ValueError as e:
+                        logging.exception("Value Error %s", e)
 
             with open(file_name, "wb") as file:
                 for i in range(packets_qty):
