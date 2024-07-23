@@ -1,3 +1,4 @@
+import locale
 import logging
 import tkinter as tk
 from pathlib import Path
@@ -14,6 +15,12 @@ logging.basicConfig(
         logging.FileHandler("info.log", "w", "utf-8"),
     ],
 )
+locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+
+
+def format_number(number):
+    return locale.format_string("%d", number, grouping=True)
+
 
 if __name__ == "__main__":
     # Inicializa a janela Tkinter
@@ -65,7 +72,24 @@ if __name__ == "__main__":
 
             if path_arquivo:
                 # Envia o arquivo
-                file_client(server_ip, server_port, packet_size, path_arquivo)
+                relatorio = file_client(
+                    server_ip, server_port, packet_size, path_arquivo
+                )
+
+                # Imprimir relatório formatado
+                print("Relatório de Transferência:")
+                print(
+                    f"Tamanho do arquivo: {format_number(relatorio['tamanho'])} bytes"
+                )
+                print(
+                    f"Número de pacotes enviados: {format_number(relatorio['enviados'])}"
+                )
+                print(
+                    f"Número de pacotes perdidos: {format_number(relatorio['perdidos'])}"
+                )
+                print(
+                    f"Velocidade: {format_number(int(relatorio['velocidade']))} bits/s"
+                )
                 break
             else:
                 print("Nenhum arquivo selecionado.")

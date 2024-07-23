@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket, timeout
 
@@ -22,8 +23,14 @@ def get_packets(file_path: Path, packet_size: int) -> list[bytes]:
 
 
 def file_client(server_ip: str, server_port: int, packet_size: int, file_path: Path):
+    # Obtém as informações básicas
+    relatorio = {"tamanho": 0, "enviados": 0, "perdidos": 0, "velocidade": 0}
     packets = get_packets(file_path, packet_size)
     number_packets = len(packets)
+    relatorio["tamanho"] = file_path.stat().st_size
+
+    # Inicia o envio das informações
+    start_time = time.time()
     try:
         with socket(AF_INET, SOCK_DGRAM) as client_socket:
             client_socket.settimeout(
@@ -39,6 +46,7 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
                     try:
                         ack, _ = client_socket.recvfrom(1024)
                         if ack:
+                            relatorio["enviados"] += 1
                             break
                         else:
                             logging.info("ACK não recebido, reenviando pacote ID:%s", i)
@@ -46,6 +54,16 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
                         logging.info(
                             "Tempo esgotado esperando ACK, reenviando pacote ID:%s", i
                         )
+                        relatorio["perdidos"] += 1
+
             print("Arquivo enviado com sucesso!")
     except Exception as e:
         logging.exception("Erro no cliente: %s", e)
+
+    end_time = time.time()
+    duration = end_time - start_time
+    if duration > 0:
+        relatorio["velocidade"] = (
+            relatorio["tamanho"] * 8
+        ) / duration  # bits por segundo
+    return relatorio
