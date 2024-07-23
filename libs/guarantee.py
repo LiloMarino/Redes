@@ -4,47 +4,43 @@ import re
 from pathlib import Path
 from socket import socket, timeout
 
-SEPARATOR = "<>"
-SECOND_SEPARATOR = "||"
+SEPARATOR = b"<<>>"
+SECOND_SEPARATOR = b"||"
 ENCONDING = "utf-8"
 
 
 def prepare_data(id: int, payload: bytes) -> bytes:
-    header = f"{id}"
-    packet = f"{header}{SEPARATOR}".encode(encoding=ENCONDING) + payload
-    checksum = hashlib.md5(packet).hexdigest()
-    packet += f"{SEPARATOR}{checksum}".encode(encoding=ENCONDING)
+    header = f"{id}".encode(ENCONDING)
+    packet = header + SEPARATOR + payload
+    checksum = hashlib.md5(packet).hexdigest().encode("utf-8")
+    packet += SEPARATOR + checksum
     return packet
 
 
 def receive_data(binary_packet: bytes) -> tuple[int, bytes]:
-    packet = binary_packet.decode(encoding=ENCONDING)
-    pattern = rf"^(\d+){re.escape(SEPARATOR)}(.+){re.escape(SEPARATOR)}([a-fA-F0-9]+)$"
-    match = re.match(pattern, packet)
-    if match:
-        header, payload, checksum = match.groups()
-        payload = payload.encode(encoding=ENCONDING)
+    try:
+        parts = binary_packet.split(SEPARATOR)
+        if len(parts) != 3:
+            raise ValueError("Pacote mal formatado.")
+
+        header, payload, checksum = parts
         if (
-            hashlib.md5(
-                f"{header}{SEPARATOR}".encode(encoding=ENCONDING) + payload
-            ).hexdigest()
-            == checksum
+            hashlib.md5(header + SEPARATOR + payload).hexdigest().encode(ENCONDING)
+            != checksum
         ):
-            return int(header), payload
-        else:
-            raise ValueError(
-                f"Pacote corrompido\nHeader:{header}\nPayload:{payload}\nChecksum{checksum}"
-            )
-    else:
-        raise ValueError(f"Pacote mal formatado.\nPacote:{packet}")
+            raise ValueError("Checksum não corresponde.")
+
+        return int(header.decode(ENCONDING)), payload
+    except Exception as e:
+        raise ValueError(f"Pacote mal formatado.\nPacote:{binary_packet}\nErro:{e}")
 
 
 def send_basic_data(
     client_socket: socket, ip_port: tuple[str, int], packets_qty: int, file_path: Path
 ):
-    file_name = file_path.name
-    payload = f"{file_name}{SECOND_SEPARATOR}{packets_qty}"
-    binary_packet = prepare_data(0, payload.encode(ENCONDING))
+    file_name = file_path.name.encode(ENCONDING)
+    payload = file_name + SECOND_SEPARATOR + str(packets_qty).encode(ENCONDING)
+    binary_packet = prepare_data(0, payload)
 
     while True:
         client_socket.sendto(binary_packet, ip_port)
@@ -71,16 +67,15 @@ def receive_basic_data(server_socket: socket):
             # Envia ACK para confirmar o recebimento
             server_socket.sendto(b"ACK", receive_address)
 
-            # Obtém os dados usando expressões regulares
-            pattern = rf"^(.+){re.escape(SECOND_SEPARATOR)}(.+)$"
-            match = re.match(pattern, payload.decode(encoding=ENCONDING))
-            if match:
-                file_name, packets_qty = match.groups()
-                return file_name, int(packets_qty)
-            else:
-                logging.error("Erro ao processar o payload.")
-                logging.info("PAYLOAD: %s", payload)
-        except ValueError:
+            # Obtém os dados usando separação de bytes
+            parts = payload.split(SECOND_SEPARATOR)
+            if len(parts) != 2:
+                raise ValueError("Payload mal formatado.")
+
+            file_name, packets_qty = parts
+            return file_name.decode(ENCONDING), int(packets_qty.decode(ENCONDING))
+        except ValueError as e:
             logging.error("Informações básicas corrompidas, solicitando reenvio...")
+            logging.info("Erro: %s", e)
         except Exception as e:
             logging.exception("Erro ao processar dados: %s", e)
