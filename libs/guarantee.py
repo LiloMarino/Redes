@@ -30,8 +30,10 @@ def receive_data(binary_packet: bytes) -> tuple[int, bytes]:
         ):
             return int(header), payload
         else:
+            logging.error("Packet:%s", packet)
             raise ValueError("Pacote corrompido")
     else:
+        logging.error("Packet:%s", packet)
         raise ValueError("Pacote mal formatado")
 
 
