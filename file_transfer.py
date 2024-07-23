@@ -11,7 +11,7 @@ logging.basicConfig(
     format="%(asctime)s - %(module)s - %(levelname)s - %(message)s",
     level=logging.INFO,
     handlers=[
-        logging.FileHandler("info.log", "a", "utf-8"),
+        logging.FileHandler("info.log", "w", "utf-8"),
     ],
 )
 

@@ -25,13 +25,13 @@ def file_server(server_port: int):
                     try:
                         header, payload = receive_data(data)
                         packets[header] = payload
+                        server_socket.sendto(b"ACK", sender_address)
                         if len(packets) > pbar.n:
                             # Envia o ACK para confirmar o recebimento do pacote
-                            server_socket.sendto(b"ACK", sender_address)
                             pbar.update(1)
                     except ValueError:
-                        # Envia NOT para solicitar o reenvio do pacote corrompido
-                        server_socket.sendto(b"NOT", sender_address)
+                        # Não faz nada
+                        pass
 
             with open(file_name, "wb") as file:
                 for i in range(packets_qty):

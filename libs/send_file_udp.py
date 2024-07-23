@@ -38,7 +38,7 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
                     client_socket.sendto(packet, (server_ip, server_port))
                     try:
                         ack, _ = client_socket.recvfrom(1024)
-                        if ack == b"ACK":
+                        if ack:
                             break
                         else:
                             logging.info("ACK não recebido, reenviando pacote ID:%s", i)
