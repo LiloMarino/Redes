@@ -26,17 +26,19 @@ def file_server(server_port: int):
                     try:
                         header, payload = receive_data(data)
                         packets[header] = payload
+                        logging.info("Recebido Pacote %s", header)
                         server_socket.sendto(b"ACK", sender_address)
                         if len(packets) > pbar.n:
-                            # Envia o ACK para confirmar o recebimento do pacote
                             pbar.update(1)
                     except ValueError as e:
-                        logging.exception("Value Error %s", e)
+                        logging.error("Pacote corrompido: %s", e)
+            logging.info("Arquivo Recebido com sucesso")
 
+            # Salva em disco
             with open(file_name, "wb") as file:
                 for i in range(packets_qty):
                     file.write(packets[i])
             print("Transferência de arquivo concluída.")
 
     except Exception as e:
-        print(f"Erro no servidor: {e}")
+        logging.exception("Erro no servidor: %s", e)

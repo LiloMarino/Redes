@@ -6,7 +6,7 @@ from socket import socket, timeout
 
 SEPARATOR = "<>"
 SECOND_SEPARATOR = "||"
-ENCONDING = "utf8"
+ENCONDING = "utf-8"
 
 
 def prepare_data(id: int, payload: bytes) -> bytes:
@@ -23,18 +23,20 @@ def receive_data(binary_packet: bytes) -> tuple[int, bytes]:
     match = re.match(pattern, packet)
     if match:
         header, payload, checksum = match.groups()
-        payload = payload.encode("utf-8")
+        payload = payload.encode(encoding=ENCONDING)
         if (
-            hashlib.md5(f"{header}{SEPARATOR}".encode() + payload).hexdigest()
+            hashlib.md5(
+                f"{header}{SEPARATOR}".encode(encoding=ENCONDING) + payload
+            ).hexdigest()
             == checksum
         ):
             return int(header), payload
         else:
-            logging.error("Packet:%s", packet)
-            raise ValueError("Pacote corrompido")
+            raise ValueError(
+                f"Pacote corrompido\nHeader:{header}\nPayload:{payload}\nChecksum{checksum}"
+            )
     else:
-        logging.error("Packet:%s", packet)
-        raise ValueError("Pacote mal formatado")
+        raise ValueError(f"Pacote mal formatado.\nPacote:{packet}")
 
 
 def send_basic_data(
@@ -42,23 +44,21 @@ def send_basic_data(
 ):
     file_name = file_path.name
     payload = f"{file_name}{SECOND_SEPARATOR}{packets_qty}"
-    binary_packet = prepare_data(0, payload.encode("utf-8"))
+    binary_packet = prepare_data(0, payload.encode(ENCONDING))
 
     while True:
         client_socket.sendto(binary_packet, ip_port)
         try:
             data, _ = client_socket.recvfrom(4096)
-            if data == b"ACK":
+            if data:
                 print("Enviado informações básicas com sucesso!")
                 break
-            else:
-                logging.info("Recebido não ACK, reenviando informações básicas...")
         except timeout:
             logging.info(
                 "Tempo esgotado esperando ACK, reenviando informações básicas..."
             )
         except Exception as e:
-            logging.error("Erro ao receber ACK: %s", e)
+            logging.exception("Erro ao receber ACK: %s", e)
             logging.info("Tentando reenviar...")
 
 
@@ -79,10 +79,8 @@ def receive_basic_data(server_socket: socket):
                 return file_name, int(packets_qty)
             else:
                 logging.error("Erro ao processar o payload.")
-                server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
+                logging.info("PAYLOAD: %s", payload)
         except ValueError:
-            logging.error("Pacote corrompido, solicitando reenvio...")
-            server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
+            logging.error("Informações básicas corrompidas, solicitando reenvio...")
         except Exception as e:
-            logging.error("Erro ao processar dados: %s", e)
-            server_socket.sendto(b"NOT", receive_address)  # Solicita reenvio
+            logging.exception("Erro ao processar dados: %s", e)

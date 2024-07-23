@@ -48,4 +48,4 @@ def file_client(server_ip: str, server_port: int, packet_size: int, file_path: P
                         )
             print("Arquivo enviado com sucesso!")
     except Exception as e:
-        print(f"Erro no cliente: {e}")
+        logging.exception("Erro no cliente: %s", e)
