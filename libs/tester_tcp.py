@@ -69,7 +69,9 @@ def upload(server_ip: str, server_port: int):
                     total_bytes += len(mensagem)
                     total_pacotes += 1
                     tempo_atual = time.time()
-                    pbar.update(tempo_atual - tempo_inicial - pbar.n)
+                    # Evita ultrapassar 100% da barra de progresso
+                    pbar.n = min(20, tempo_atual - tempo_inicial)
+                    pbar.refresh()  # Atualiza a barra de progresso
                     if tempo_atual - tempo_inicial >= 20:
                         break
 
