@@ -2,6 +2,8 @@ import os
 import time
 from socket import AF_INET, SOCK_STREAM, socket
 
+from tqdm import tqdm
+
 from libs.host_tcp import get_local_ip
 
 
@@ -19,15 +21,17 @@ def download(server_port: int):
             total_pacotes = 0
             tempo_inicial = time.time()
 
-            while True:
-                data = client_socket.recv(500)
-                if not data:
-                    break
-                total_bytes += len(data)
-                total_pacotes += 1
-                tempo_atual = time.time()
-                if tempo_atual - tempo_inicial >= 20:
-                    break
+            with tqdm(total=20, desc="Recebendo dados", unit="s", ncols=100) as pbar:
+                while True:
+                    data = client_socket.recv(500)
+                    if not data:
+                        break
+                    total_bytes += len(data)
+                    total_pacotes += 1
+                    tempo_atual = time.time()
+                    pbar.update(tempo_atual - tempo_inicial - pbar.n)
+                    if tempo_atual - tempo_inicial >= 20:
+                        break
 
             client_socket.close()
 
@@ -59,13 +63,15 @@ def upload(server_ip: str, server_port: int):
             total_pacotes = 0
             tempo_inicial = time.time()
 
-            while True:
-                client_socket.sendall(mensagem.encode())
-                total_bytes += len(mensagem)
-                total_pacotes += 1
-                tempo_atual = time.time()
-                if tempo_atual - tempo_inicial >= 20:
-                    break
+            with tqdm(total=20, desc="Enviando dados", unit="s", ncols=100) as pbar:
+                while True:
+                    client_socket.sendall(mensagem.encode())
+                    total_bytes += len(mensagem)
+                    total_pacotes += 1
+                    tempo_atual = time.time()
+                    pbar.update(tempo_atual - tempo_inicial - pbar.n)
+                    if tempo_atual - tempo_inicial >= 20:
+                        break
 
             tempo_total = time.time() - tempo_inicial
             taxa_transferencia_bps = (total_bytes * 8) / tempo_total
