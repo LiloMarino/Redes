@@ -1,3 +1,4 @@
+import time
 from socket import AF_INET, SOCK_STREAM, socket
 
 from libs.host_tcp import get_local_ip
@@ -18,6 +19,7 @@ def receive_lost_packet(server_port: int) -> int:
 
 
 def send_lost_packet(server_ip: str, server_port: int, lost_packets: int) -> int:
+    time.sleep(1)
     try:
         with socket(AF_INET, SOCK_STREAM) as client_socket:
             client_socket.connect((server_ip, server_port))
