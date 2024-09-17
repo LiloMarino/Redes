@@ -1,5 +1,6 @@
 from libs import tester_tcp, tester_udp
 from libs.autoload import load_config, save_config
+from libs.util import receive_lost_packet, send_lost_packet
 
 if __name__ == "__main__":
     # Carrega as configurações
@@ -32,9 +33,12 @@ if __name__ == "__main__":
 
             # Hospeda
             if protocolo == "TCP":
-                tester_tcp.download(server_port)
+                ip_cliente, total_packets = tester_tcp.download(server_port)
             else:
-                tester_udp.download(server_port)
+                ip_cliente, total_packets = tester_udp.download(server_port)
+            send_lost_packet(ip_cliente, server_port, total_packets)
+            lost_packets = receive_lost_packet(server_port)
+            print(f"Pacotes Perdidos: {lost_packets}")
         elif option == "U":
             # Exige o ip e a port
             server_ip = input(
@@ -55,8 +59,11 @@ if __name__ == "__main__":
 
             # Conecta
             if protocolo == "TCP":
-                tester_tcp.upload(server_ip, server_port)
+                total_packets = tester_tcp.upload(server_ip, server_port)
             else:
-                tester_udp.upload(server_ip, server_port)
+                total_packets = tester_udp.upload(server_ip, server_port)
+            packets_received = receive_lost_packet(server_port)
+            send_lost_packet(server_ip, server_port, total_packets - packets_received)
+            print(f"Pacotes Perdidos: {total_packets - packets_received}")
         else:
             option = input("Opção inválida digite novamente: ").upper()

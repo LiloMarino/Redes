@@ -51,6 +51,7 @@ def download(server_port: int):
                 """
             )
             print(f"Pacotes por segundo: {pacotes_por_segundo:,.2f} pacotes/s")
+            return server_ip, total_pacotes
     except Exception as e:
         print(f"Erro ao iniciar o servidor: {e}")
 
@@ -98,5 +99,6 @@ def upload(server_ip: str, server_port: int):
                 """
             )
             print(f"Pacotes por segundo: {pacotes_por_segundo:,.2f} pacotes/s")
+            return total_pacotes
     except Exception as e:
         print(f"Erro ao se conectar ao servidor: {e}")
