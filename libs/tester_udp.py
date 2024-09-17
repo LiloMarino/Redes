@@ -36,7 +36,14 @@ def download(server_port: int):
             print(f"Conexão encerrada com {ip_cliente}")
             print(f"Total de bytes recebidos: {total_bytes:,}")
             print(f"Total de pacotes recebidos: {total_pacotes:,}")
-            print(f"Taxa de transferência: {taxa_transferencia_bps / 1e6:,.2f} Mbit/s")
+            print(
+                f"""Taxa de transferência:
+                  {taxa_transferencia_bps / 1e9:,.2f} Gbit/s
+                  {taxa_transferencia_bps / 1e6:,.2f} Mbit/s
+                  {taxa_transferencia_bps / 1e3:,.2f} Kbit/s
+                  {taxa_transferencia_bps:,.2f} bit/s
+                """
+            )
             print(f"Pacotes por segundo: {pacotes_por_segundo:,.2f} pacotes/s")
     except Exception as e:
         print(f"Erro ao iniciar o servidor: {e}")
@@ -75,7 +82,14 @@ def upload(server_ip: str, server_port: int):
             print(f"Conexão encerrada com o servidor {server_ip}:{server_port}")
             print(f"Total de bytes enviados: {total_bytes:,}")
             print(f"Total de pacotes enviados: {total_pacotes:,}")
-            print(f"Taxa de transferência: {taxa_transferencia_bps / 1e6:,.2f} Mbit/s")
+            print(
+                f"""Taxa de transferência:
+                  {taxa_transferencia_bps / 1e9:,.2f} Gbit/s
+                  {taxa_transferencia_bps / 1e6:,.2f} Mbit/s
+                  {taxa_transferencia_bps / 1e3:,.2f} Kbit/s
+                  {taxa_transferencia_bps:,.2f} bit/s
+                """
+            )
             print(f"Pacotes por segundo: {pacotes_por_segundo:,.2f} pacotes/s")
     except Exception as e:
         print(f"Erro ao se conectar ao servidor: {e}")
