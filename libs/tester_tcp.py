@@ -33,8 +33,13 @@ def download(server_port: int):
                     if tempo_atual - tempo_inicial >= 20:
                         break
 
+            # Receber a mensagem final com o número total de pacotes enviados
+            total_pacotes_enviados = int(client_socket.recv(1024).decode())
+
             client_socket.close()
 
+            # Calcula os pacotes perdidos
+            pacotes_perdidos = total_pacotes_enviados - total_pacotes
             tempo_total = time.time() - tempo_inicial
             taxa_transferencia_bps = (total_bytes * 8) / tempo_total
             pacotes_por_segundo = total_pacotes / tempo_total
@@ -42,6 +47,8 @@ def download(server_port: int):
             print(f"Conexão encerrada com {ip_cliente}")
             print(f"Total de bytes recebidos: {total_bytes:,}")
             print(f"Total de pacotes recebidos: {total_pacotes:,}")
+            print(f"Total de pacotes enviados: {total_pacotes_enviados:,}")
+            print(f"Total de pacotes perdidos: {pacotes_perdidos:,}")
             print(
                 f"""Taxa de transferência:
                   {taxa_transferencia_bps / 1e9:,.2f} Gbit/s
@@ -81,6 +88,9 @@ def upload(server_ip: str, server_port: int):
                     pbar.refresh()  # Atualiza a barra de progresso
                     if tempo_atual - tempo_inicial >= 20:
                         break
+
+            # Envia o total de pacotes ao servidor no final
+            client_socket.sendall(f"{total_pacotes}".encode())
 
             tempo_total = time.time() - tempo_inicial
             taxa_transferencia_bps = (total_bytes * 8) / tempo_total
