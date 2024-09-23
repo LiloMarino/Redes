@@ -1,4 +1,5 @@
 import os
+import re
 import time
 from socket import AF_INET, SOCK_STREAM, socket
 
@@ -24,7 +25,7 @@ def download(server_port: int):
             with tqdm(total=20, desc="Recebendo dados", unit="s", ncols=100) as pbar:
                 while True:
                     data = client_socket.recv(500)
-                    if not data:
+                    if not data or b"END" in data:
                         break
                     total_bytes += len(data)
                     total_pacotes += 1
@@ -33,12 +34,18 @@ def download(server_port: int):
                     if tempo_atual - tempo_inicial >= 20:
                         break
 
-            # Receber a mensagem final com o número total de pacotes enviados
-            total_pacotes_enviados = int(client_socket.recv(1024).decode())
+            # Consome o buffer até encontrar "END"
+            while data and b"END" not in data:
+                data = client_socket.recv(500)
+
+            match = re.search(r"END(\d+)", data.decode())
+            total_pacotes_enviados = int(match.group(1))
 
             client_socket.close()
 
             # Calcula os pacotes perdidos
+            if total_pacotes_enviados < total_pacotes:
+                total_pacotes = total_pacotes_enviados
             pacotes_perdidos = total_pacotes_enviados - total_pacotes
             tempo_total = time.time() - tempo_inicial
             taxa_transferencia_bps = (total_bytes * 8) / tempo_total
@@ -83,14 +90,14 @@ def upload(server_ip: str, server_port: int):
                     total_bytes += len(mensagem)
                     total_pacotes += 1
                     tempo_atual = time.time()
-                    # Evita ultrapassar 100% da barra de progresso
                     pbar.n = min(20, tempo_atual - tempo_inicial)
                     pbar.refresh()  # Atualiza a barra de progresso
                     if tempo_atual - tempo_inicial >= 20:
                         break
 
-            # Envia o total de pacotes ao servidor no final
-            client_socket.sendall(f"{total_pacotes}".encode())
+            # Envia "END" e o total de pacotes enviados
+            client_socket.sendall("END".encode())
+            client_socket.sendall(str(total_pacotes).encode())
 
             tempo_total = time.time() - tempo_inicial
             taxa_transferencia_bps = (total_bytes * 8) / tempo_total
