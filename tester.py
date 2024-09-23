@@ -34,7 +34,7 @@ if __name__ == "__main__":
             if protocolo == "TCP":
                 tester_tcp.download(server_port)
             else:
-                tester_udp.download(server_port)
+                tester_udp.download(server_port, server_port)
         elif option == "U":
             # Exige o ip e a port
             server_ip = input(
@@ -57,6 +57,6 @@ if __name__ == "__main__":
             if protocolo == "TCP":
                 tester_tcp.upload(server_ip, server_port)
             else:
-                tester_udp.upload(server_ip, server_port)
+                tester_udp.upload(server_ip, server_port, server_port)
         else:
             option = input("Opção inválida digite novamente: ").upper()
