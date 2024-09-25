@@ -10,7 +10,7 @@ def get_local_ip():
         return local_ip
     except Exception as e:
         print(f"Não foi possível obter o IP local: {e}")
-        return "127.0.0.1"  # Fallback para loopback
+        return "0.0.0.0"  # Fallback para loopback
 
 
 def host(server_port: int, host_nickname: str):
